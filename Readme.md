@@ -10,10 +10,10 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 
 | Item | Value |
 |---|---|
-| APK | `Instagram_Mod_LSPatch_v452.0.0.48.64.apk` (GitHub Release asset) |
-| Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64.apk` |
+| APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk` (GitHub Release asset) |
+| Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk` |
 | Size | 165,366,712 bytes |
-| SHA-256 | `DBABBFDD99EEA0CBFA7C7E819F2457629F44DAA145E4024EBE3061F8C6C93953` |
+| SHA-256 | `BCB019E152A5CFBD935A1CD398D374D7B487C616A7530871390A46A02A62C15C` |
 | Package | `com.instagram.android` |
 | Version | 452.0.0.48.64 (versionCode 385810270) |
 | ABI | arm64-v8a |
@@ -24,6 +24,9 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 The APK is published as a **release asset** because it exceeds GitHub's 100 MB per-file git limit.
 The repo contains docs and the module source; `perm_test_decoded` and `base_clean.apk` are excluded
 because of their size.
+
+Build `r2`: renamed the Mod Settings row to **Download (Stories,Reels,Feeds)** and redeployed to the
+emulator and phone.
 
 Supporting docs:
 
@@ -36,9 +39,9 @@ Supporting docs:
 - **Mod Setting** button on your own profile, centered below Edit/Share.
   Opens a native dialog with:
   - Anonymous story view: ON/OFF
-  - Download option: ON/OFF
+  - Download (Stories,Reels,Feeds): ON/OFF
 - Settings persist in `SharedPreferences("igmod")` (`anon_story`, `download_enabled`).
-- **Download** row in post and story overflow menus, shown only when Download option is ON.
+- **Download** row in post and story overflow menus, shown only when Download (Stories,Reels,Feeds) is ON.
 - **Feed/post download** resolves the exact visible post through its overflow-button
   listener/tag, then downloads:
   - best video variant via `Media.AB6()`, or
@@ -65,13 +68,13 @@ The old Frida build's arm64 JS bridge was the dominant cost; LSPatch removes it.
 
 ## Install
 
-1. Download `Instagram_Mod_LSPatch_v452.0.0.48.64.apk` from
+1. Download `Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk` from
    [Releases](https://github.com/ady133t/Insta-Mods/releases/latest).
 2. Prefer a **burner Instagram account**; IG/LSPatch may be detectable.
 3. From the Play Store build, **uninstall Instagram first** (signature mismatch).
    This deletes login and app data.
 4. Install the APK:
-   `adb install -r -d Instagram_Mod_LSPatch_v452.0.0.48.64.apk`
+   `adb install -r -d Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk`
 5. Log in.
 6. Disable Play Store auto-update for Instagram.
 7. Accept Play Protect / unknown-source prompts if shown.
@@ -124,7 +127,7 @@ Local build workspace (not every large item is committed to GitHub):
 ```
 workspace\
 ├─ lspatch\
-│  ├─ Instagram_Mod_LSPatch_v452.0.0.48.64.apk   final patched APK (release asset)
+│  ├─ Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk   final patched APK (release asset)
 │  ├─ module.apk                                 signed Java module APK
 │  ├─ base_clean.apk                             clean IG base used for patching (not committed)
 │  ├─ lspatch-v1.2-487-release.jar               patcher

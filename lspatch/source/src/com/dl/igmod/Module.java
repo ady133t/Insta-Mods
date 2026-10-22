@@ -370,7 +370,7 @@ final class Settings {
             });
 
             final TextView row2 = new TextView(ctx);
-            row2.setText("Download option: " + (Prefs.download ? "ON" : "OFF"));
+            row2.setText("Download (Stories,Reels,Feeds): " + (Prefs.download ? "ON" : "OFF"));
             row2.setTextSize(16f);
             row2.setTextColor(Color.WHITE);
             row2.setPadding(Ui.dp(ctx, 12), Ui.dp(ctx, 18), Ui.dp(ctx, 12), Ui.dp(ctx, 18));
@@ -378,7 +378,7 @@ final class Settings {
                 @Override
                 public void onClick(View v) {
                     Prefs.setDownload(ctx, !Prefs.download);
-                    row2.setText("Download option: " + (Prefs.download ? "ON" : "OFF"));
+                    row2.setText("Download (Stories,Reels,Feeds): " + (Prefs.download ? "ON" : "OFF"));
                 }
             });
 

@@ -18,9 +18,9 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Base | clean apktool rebuild, no Frida/gadget |
 | Patch framework | JingMatrix LSPatch v1.2 (487) |
 | Module | `com.dl.igmod` |
-| Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64.apk` |
+| Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk` |
 | Size | 165,366,712 bytes |
-| SHA-256 | `DBABBFDD99EEA0CBFA7C7E819F2457629F44DAA145E4024EBE3061F8C6C93953` |
+| SHA-256 | `BCB019E152A5CFBD935A1CD398D374D7B487C616A7530871390A46A02A62C15C` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -219,7 +219,7 @@ Hook `TextView.setText` (`CharSequence` and `int` overloads). On `"Edit profile"
    padding 32/10 dp.
 7. Click shows a native `AlertDialog` with two clickable `TextView` rows:
    - Anonymous story view: ON/OFF
-   - Download option: ON/OFF
+   - Download (Stories,Reels,Feeds): ON/OFF
 
 The header sometimes rebuilds; the setText hook re-fires and the tag check avoids duplicates.
 Logs on failure: `profile row not found`; on success: `profile button added`.
@@ -454,7 +454,7 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
   `4013199898818484516_1254997058`, 720 px JPG, image matched the on-screen slide.
 - **Feed download (phone)**: visible Monet carousel slide → 1080 px JPG (232,618 bytes), matched.
 - **Stealth**: MuMu and phone logged `seen suppressed` with anonymous ON; no suppression with OFF.
-- **Gating**: Download option OFF removed the row; ON restored it.
+- **Gating**: Download (Stories,Reels,Feeds) OFF removed the row; ON restored it.
 
 ---
 
@@ -471,4 +471,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `DBABBFDD99EEA0CBFA7C7E819F2457629F44DAA145E4024EBE3061F8C6C93953`.
+- Final artifact hash: `BCB019E152A5CFBD935A1CD398D374D7B487C616A7530871390A46A02A62C15C`.
