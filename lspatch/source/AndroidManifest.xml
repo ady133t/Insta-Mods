@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.dl.igmod"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="35" />
+
+    <application android:label="DLM">
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription" android:value="DLM Instagram mod" />
+        <meta-data android:name="xposedminversion" android:value="93" />
+    </application>
+</manifest>

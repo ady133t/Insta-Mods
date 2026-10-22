@@ -1,0 +1,6 @@
+# Large artifacts (published as release assets or kept local only)
+lspatch/Instagram_Mod_LSPatch_*.apk
+lspatch/base_clean.apk
+perm_test_decoded/
+instagram_merged.apk
+*.idsig
