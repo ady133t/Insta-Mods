@@ -20,7 +20,7 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Module | `com.dl.igmod` |
 | Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2` |
+| SHA-256 | `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -391,6 +391,15 @@ req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
   supplied ghost motif.
 - Owner (if needed) comes from view content descriptions containing `"'s story"`; slide index from
   `SegmentedProgressBar.getCurrentSegment()/getSegments()`.
+- **Follower badge / relationship check**: hook `UserDetailFragment.onResume`. The profile model is
+  `UserDetailViewModel.A01`; the relationship flag is
+  `User.A1H()` → `RelationshipInfoDict.CGs()` (`followed_by`), with `User.A2P()` as fallback.
+  Note: `User.A7J()` is the numeric user ID (not the username); `User.A7a()` is the full name.
+  The badge is inserted in the top toolbar's horizontal `IgLinearLayout`, immediately after the
+  username block. It reads `uiMode` to match the app theme: white pill with dark text in dark mode,
+  black pill with white text in light mode; the negative state uses a neutral theme-matched pill.
+  Own profiles are skipped by detecting the `Edit profile` label. Verified:
+  `lily_girl90` → `followed_by=true` / **Follower**; `tonyautomation` → **Not Follower**.
 - For downloads, the exact visible slide is resolved by the same hit-test/listener path; the current
   slide's media ID is selected. Verified:
   - houseofhighlights Q&A slide → `4013199898818484516_1254997058`, 720 px JPG, matched on-screen.
@@ -466,6 +475,9 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
   builds; dialog toggles updated/persisted (`shared_prefs/igmod.xml`).
 - **Menu button**: `[DLM] menu button added at top`; rounded green Download button pinned at the
   top of the sheet; tapping downloads the visible media; toggling the setting OFF hides it.
+- **Follower indicator (MuMu)**: `lily_girl90` showed a white **Follower** pill in dark mode and a
+  black **Follower** pill in light mode, beside the toolbar username. `tonyautomation` showed the
+  neutral **Not Follower** pill. The viewer's own profile showed no pill.
 - **Ghost badge (phone)**: final r3 places it inside the story image's bottom-right corner, with
   matching ~12 dp visible spacing from the right edge and visible media bottom, clear of the
   reply bar. Appeared when anonymous was ON; absent when anonymous was OFF.
@@ -494,4 +506,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2`.
+- Final artifact hash: `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7`.

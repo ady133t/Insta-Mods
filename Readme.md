@@ -13,7 +13,7 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 | APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` (GitHub Release asset) |
 | Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2` |
+| SHA-256 | `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7` |
 | Package | `com.instagram.android` |
 | Version | 452.0.0.48.64 (versionCode 385810270) |
 | ABI | arm64-v8a |
@@ -30,8 +30,8 @@ Build `r3`: moved the menu Download row to the **top**, turned it into a rounded
 `#1ED760` button, and added the semi-transparent ghost badge overlay in the story viewer when
 anonymous view is ON. The badge is anchored to the visible story-content frame, with matching
 ~12 dp visible spacing on its right and bottom edges, and lifts above Like/Share only on layouts
-where those icons overlap the corner. Deployed and verified on the MuMu emulator and Infinix
-X6873 phone.
+where those icons overlap the corner. The follower indicator was verified on the MuMu emulator in
+dark and light themes; the phone will be updated when it reconnects.
 
 Supporting docs:
 
@@ -49,6 +49,9 @@ Supporting docs:
   bottom-right corner of the story image, with matching ~12 dp visible spacing on its right and
   bottom edges (above the reply bar). On layouts where the Like/Share icons overlap that corner,
   the badge moves just above them.
+- **Follower check:** on another user's profile, a small theme-adaptive pill beside the username
+  shows **Follower** when that user follows you, otherwise **Not Follower**. Own profile is skipped.
+  In dark mode the Follower pill is white with dark text; in light mode it is dark with white text.
 - Settings persist in `SharedPreferences("igmod")` (`anon_story`, `download_enabled`).
 - **Download** button pinned at the top of post and story overflow menus, styled as a rounded
   green button. Shown only when Download (Stories,Reels,Feeds) is ON.
@@ -146,7 +149,8 @@ workspace\
 │     ├─ assets\xposed_init
 │     ├─ stubs\de\robv\android\xposed\...         compile-time Xposed stubs
 │     ├─ src\com\dl\igmod\Module.java            hooks, download, settings UI
-│     └─ src\com\dl\igmod\GhostOverlay.java      story ghost badge + media anchoring
+│     ├─ src\com\dl\igmod\GhostOverlay.java      story ghost badge + media anchoring
+│     └─ src\com\dl\igmod\FollowerBadge.java     profile Follower / Not Follower pill
 ├─ perm_test_decoded\                            clean apktool tree (not committed)
 └─ instagram_merged.apk                          stock merged base (not committed)
 ```

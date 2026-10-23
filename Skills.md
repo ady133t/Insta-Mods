@@ -401,6 +401,21 @@ Verified on the phone: matching ~12 dp visible spacing on the right and bottom, 
 bar. Verified on the emulator: visible with anonymous ON and lifted above the action icons; absent
 with OFF.
 
+### 8.3c Profile follower badge
+
+1. Hook `UserDetailFragment.onResume`; retry for a few seconds while the profile data loads.
+2. Read `UserDetailViewModel.A01` for the `User` (fragment field `A0c`, then view-model field `A01`).
+3. Read `User.A1H().CGs()` for `followed_by`; fall back to `User.A2P()`. Note `User.A7J()` is the
+   user ID, not the username; `User.A7a()` is the full name.
+4. Skip the viewer's own profile if the view contains an `Edit profile` label.
+5. Find the topmost `TextView` in the toolbar, climb to its horizontal `LinearLayout`, and insert a
+   compact pill immediately after the title block.
+6. Color the pill from `uiMode`: white/dark text in dark mode, black/white in light mode. Use a
+   neutral theme-matched pill for **Not Follower**.
+7. Find/update the pill by tag to avoid duplicates across retries.
+
+Verified: `lily_girl90` (follower) and `tonyautomation` (not follower), in dark and light themes.
+
 ### 8.4 Insert a menu row
 
 Hook `TextView.setText` for `"Not interested"`, `"AI info"`, `"Report"`.

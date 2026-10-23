@@ -69,6 +69,7 @@ public class Module implements IXposedHookLoadPackage {
         hookStory(cl);
         hookMedia(cl);
         hookProfileText(cl);
+        hookFollowerBadge(cl);
     }
 
     static void initPrefs(final ClassLoader cl) {
@@ -147,6 +148,20 @@ public class Module implements IXposedHookLoadPackage {
             Log.i(TAG, "story hook");
         } catch (Throwable t) {
             Log.e(TAG, "story hook failed", t);
+        }
+    }
+
+    static void hookFollowerBadge(final ClassLoader cl) {
+        try {
+            XposedHelpers.findAndHookMethod("com.instagram.profile.fragment.UserDetailFragment", cl, "onResume", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    FollowerBadge.refresh(param.thisObject);
+                }
+            });
+            Log.i(TAG, "follower badge hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "follower badge hook failed", t);
         }
     }
 

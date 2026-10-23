@@ -10,12 +10,14 @@ Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
   the reply bar).
 - **Ghost position fix:** the badge anchors to the visible story-content frame instead of the
   fragment root, and lifts just above Like/Share only when those icons overlap the corner (MuMu).
-- Deployed and verified on the MuMu emulator and Infinix X6873 phone.
+- **Follower indicator:** profiles now show a theme-adaptive **Follower** or **Not Follower** pill
+  beside the username. White pill in dark mode, dark pill in light mode; own profile is skipped.
+- Verified on the MuMu emulator in dark and light themes; the phone will be updated when it reconnects.
 
 ## Release asset
 - `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk`
 - Size: 165,370,808 bytes
-- SHA-256: `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2`
+- SHA-256: `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7`
 
 ## Features
 - Mod Setting button on your profile with Anonymous story view and
