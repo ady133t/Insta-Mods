@@ -5,14 +5,16 @@ Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
 ## Changes in r3
 - Both Mod Setting and menu Download buttons now use **#1ED760** (30, 215, 96).
 - Menu Download is pinned at the **top** of post/story ≡ sheets as a rounded button.
-- Anonymous story view now shows a small semi-transparent ghost badge at the bottom-right of the
-  story viewer.
+- Anonymous story view now shows a small semi-transparent ghost badge inside the bottom-right
+  corner of the story image (16 dp inset, above the reply bar).
+- **Ghost position fix:** the badge anchors to the visible story-content frame instead of the
+  fragment root, and lifts just above Like/Share only when those icons overlap the corner (MuMu).
 - Deployed and verified on the MuMu emulator and Infinix X6873 phone.
 
 ## Release asset
 - `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk`
 - Size: 165,370,808 bytes
-- SHA-256: `C25DAEC1A0FDF1F86DCB7903F498368F50C920E452D73D1D272004F9A21909D1`
+- SHA-256: `52027D722E22C5270CE4F58B982867278B036D8EFDC3E03D3C963B351B014CE4`
 
 ## Features
 - Mod Setting button on your profile with Anonymous story view and

@@ -12,6 +12,8 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +23,12 @@ import java.util.WeakHashMap;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * Semi-transparent ghost badge shown at the bottom-right of the story viewer while
+ * Semi-transparent ghost badge shown at the bottom-right of the story image while
  * anonymous story view is enabled.
  */
 final class GhostOverlay {
     private static final Map<View, Holder> ACTIVE = new WeakHashMap<View, Holder>();
+    private static final Map<View, Rect> MEDIA_RECTS = new WeakHashMap<View, Rect>();
 
     static void showFor(Object fragment) {
         if (fragment == null || !Prefs.anon) return;
@@ -59,45 +62,213 @@ final class GhostOverlay {
             final GhostDrawable d = new GhostDrawable();
             final int size = Ui.dp(ctx, 36);
             final int right = Ui.dp(ctx, 16);
-            final int bottom = Ui.dp(ctx, 96);
+            final int bottom = Ui.dp(ctx, 16);
 
-            View.OnLayoutChangeListener listener = new View.OnLayoutChangeListener() {
+            final Holder h = new Holder(d, null, findMediaView(root));
+            h.listener = new View.OnLayoutChangeListener() {
                 @Override
                 public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
-                    updateBounds(root, d, size, right, bottom);
+                    View found = findMediaView(root);
+                    if (found != null) h.media = found;
+                    updateBounds(root, d, h.media, size, right, bottom);
                 }
             };
-            Holder h = new Holder(d, listener);
             synchronized (ACTIVE) {
                 ACTIVE.put(root, h);
             }
-            root.addOnLayoutChangeListener(listener);
+            root.addOnLayoutChangeListener(h.listener);
             root.getOverlay().add(d);
             root.post(new Runnable() {
                 @Override
                 public void run() {
-                    updateBounds(root, d, size, right, bottom);
+                    View found = findMediaView(root);
+                    if (found != null) h.media = found;
+                    updateBounds(root, d, h.media, size, right, bottom);
                 }
             });
-            Log.i("DLM", "ghost badge shown");
         } catch (Throwable t) {
             Log.e("DLM", "ghost badge failed", t);
         }
     }
 
-    private static void updateBounds(View root, GhostDrawable d, int size, int right, int bottom) {
+    private static void updateBounds(View root, GhostDrawable d, View media, int size, int right, int bottom) {
         try {
-            int w = root.getWidth();
-            int h = root.getHeight();
-            if (w <= 0 || h <= 0) return;
-            int left = w - size - right;
-            int top = h - size - bottom;
-            if (left < 0) left = 0;
-            if (top < 0) top = 0;
-            d.setBounds(left, top, left + size, top + size);
+            int[] rootLoc = new int[2];
+            root.getLocationOnScreen(rootLoc);
+            int baseRight;
+            int baseBottom;
+            if (media != null && media.isShown()) {
+                Rect visible = MEDIA_RECTS.get(media);
+                if (visible == null || visible.isEmpty()) {
+                    visible = new Rect();
+                    if (!media.getGlobalVisibleRect(visible)) visible = null;
+                }
+                if (visible != null && !visible.isEmpty()) {
+                    baseRight = visible.right - rootLoc[0];
+                    baseBottom = visible.bottom - rootLoc[1];
+                } else {
+                    int[] mediaLoc = new int[2];
+                    media.getLocationOnScreen(mediaLoc);
+                    baseRight = mediaLoc[0] - rootLoc[0] + media.getWidth();
+                    baseBottom = mediaLoc[1] - rootLoc[1] + media.getHeight();
+                }
+            } else {
+                baseRight = root.getWidth();
+                baseBottom = root.getHeight();
+            }
+            if (baseRight <= 0 || baseBottom <= 0) return;
+            int actionTop = findActionTop(root, rootLoc);
+            if (actionTop > 0 && actionTop < baseBottom) {
+                baseBottom = actionTop;
+            }
+            int l = baseRight - right - size;
+            int t = baseBottom - bottom - size;
+            if (l < 0) l = 0;
+            if (t < 0) t = 0;
+            d.setBounds(l, t, l + size, t + size);
             root.invalidate();
         } catch (Throwable t) {
         }
+    }
+
+    /**
+     * Top edge (relative to the viewer root) of a small action icon in the lower-right.
+     * Some story layouts draw Like/Share over the media instead of below it.
+     */
+    private static int findActionTop(View root, int[] rootLoc) {
+        if (!(root instanceof ViewGroup)) return -1;
+        try {
+            Context ctx = root.getContext();
+            int min = Ui.dp(ctx, 24);
+            int max = Ui.dp(ctx, 80);
+            int rw = root.getWidth();
+            int rh = root.getHeight();
+            if (rw <= 0 || rh <= 0) return -1;
+
+            ArrayList<View> stack = new ArrayList<View>();
+            ViewGroup rg = (ViewGroup) root;
+            for (int i = 0; i < rg.getChildCount(); i++) stack.add(rg.getChildAt(i));
+
+            int best = Integer.MAX_VALUE;
+            int guard = 0;
+            while (!stack.isEmpty() && guard++ < 3000) {
+                View v = stack.remove(stack.size() - 1);
+                if (v == null || !v.isShown()) continue;
+                if (v instanceof ImageView) {
+                    Rect r = new Rect();
+                    if (v.getGlobalVisibleRect(r)) {
+                        int w = r.width();
+                        int h = r.height();
+                        int cx = r.centerX() - rootLoc[0];
+                        int cy = r.centerY() - rootLoc[1];
+                        if (w >= min && h >= min && w <= max && h <= max
+                                && cx > rw * 0.6f && cy > rh * 0.5f) {
+                            int top = r.top - rootLoc[1];
+                            if (top < best) best = top;
+                        }
+                    }
+                }
+                if (v instanceof ViewGroup) {
+                    ViewGroup g = (ViewGroup) v;
+                    for (int i = 0; i < g.getChildCount(); i++) {
+                        try {
+                            View c = g.getChildAt(i);
+                            if (c != null) stack.add(c);
+                        } catch (Throwable t) {
+                        }
+                    }
+                }
+            }
+            return best == Integer.MAX_VALUE ? -1 : best;
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /**
+     * Find the visible story media image/video, ignoring full-screen blur/background layers.
+     */
+    static View findMediaView(View root) {
+        if (root == null || !(root instanceof android.view.ViewGroup)) return null;
+        try {
+            int rw = root.getWidth();
+            int rh = root.getHeight();
+            long rootArea = (long) rw * rh;
+            int[] rootLoc = new int[2];
+            root.getLocationOnScreen(rootLoc);
+            int rootBottom = rootLoc[1] + rh;
+            int gap = Ui.dp(root.getContext(), 40);
+            ArrayList<View> stack = new ArrayList<View>();
+            android.view.ViewGroup rg = (android.view.ViewGroup) root;
+            for (int i = 0; i < rg.getChildCount(); i++) stack.add(rg.getChildAt(i));
+
+            View contentBest = null;
+            long contentArea = 0;
+            Rect contentRect = null;
+            View mediaBest = null;
+            long mediaArea = 0;
+            Rect mediaRect = null;
+            View fallback = null;
+            long fallbackArea = 0;
+            Rect fallbackRect = null;
+            int guard = 0;
+            while (!stack.isEmpty() && guard++ < 3000) {
+                View v = stack.remove(stack.size() - 1);
+                if (v == null || !v.isShown()) continue;
+                Rect r = new Rect();
+                if (!v.getGlobalVisibleRect(r)) continue;
+                long area = (long) r.width() * r.height();
+                if (area <= 0) continue;
+                String cn = v.getClass().getName().toLowerCase();
+                boolean bad = cn.contains("background") || cn.contains("blur")
+                        || cn.contains("scrim") || cn.contains("progress");
+                boolean named = cn.contains("surfaceview") || cn.contains("textureview")
+                        || cn.contains("imageview") || cn.contains("videoview")
+                        || cn.contains("igimage") || cn.contains("photo");
+                if (!bad) {
+                    if (area > rootArea / 4 && r.width() >= rw * 0.7f && r.height() >= rh * 0.4f
+                            && r.bottom <= rootBottom - gap && area > contentArea) {
+                        contentBest = v;
+                        contentArea = area;
+                        contentRect = new Rect(r);
+                    }
+                    if (named && area > rootArea / 8 && area < rootArea * 0.985 && area > mediaArea) {
+                        mediaBest = v;
+                        mediaArea = area;
+                        mediaRect = new Rect(r);
+                    }
+                    if (area > fallbackArea) {
+                        fallback = v;
+                        fallbackArea = area;
+                        fallbackRect = new Rect(r);
+                    }
+                }
+                if (v instanceof android.view.ViewGroup) {
+                    android.view.ViewGroup g = (android.view.ViewGroup) v;
+                    for (int i = 0; i < g.getChildCount(); i++) {
+                        try {
+                            View c = g.getChildAt(i);
+                            if (c != null) stack.add(c);
+                        } catch (Throwable t) {
+                        }
+                    }
+                }
+            }
+            if (contentBest != null) {
+                if (contentRect != null) MEDIA_RECTS.put(contentBest, contentRect);
+                return contentBest;
+            }
+            if (mediaBest != null) {
+                if (mediaRect != null) MEDIA_RECTS.put(mediaBest, mediaRect);
+                return mediaBest;
+            }
+            if (fallback != null && fallbackArea > rootArea / 3) {
+                if (fallbackRect != null) MEDIA_RECTS.put(fallback, fallbackRect);
+                return fallback;
+            }
+        } catch (Throwable t) {
+        }
+        return null;
     }
 
     static void hide(View root) {
@@ -132,11 +303,13 @@ final class GhostOverlay {
 
     private static final class Holder {
         final GhostDrawable drawable;
-        final View.OnLayoutChangeListener listener;
+        View.OnLayoutChangeListener listener;
+        View media;
 
-        Holder(GhostDrawable drawable, View.OnLayoutChangeListener listener) {
+        Holder(GhostDrawable drawable, View.OnLayoutChangeListener listener, View media) {
             this.drawable = drawable;
             this.listener = listener;
+            this.media = media;
         }
     }
 }
@@ -178,7 +351,6 @@ final class GhostDrawable extends Drawable {
         float h = b.height();
         if (w <= 0 || h <= 0) return;
 
-        // Scale the stroke to the icon size.
         stroke.setStrokeWidth(Math.max(1.5f, w * 0.055f));
         back.setStrokeWidth(stroke.getStrokeWidth() + 2.0f);
 

@@ -385,13 +385,19 @@ When anonymous view is ON, add a small semi-transparent badge to the story viewe
 1. Hook `ReelViewerFragment.onResume`; get the fragment root via `getView()`.
 2. Add a custom `GhostDrawable` to `root.getOverlay()` (a `ViewOverlay` drawable), so it does not
    affect layout or intercept touches.
-3. Position it at 36 dp, right margin 16 dp, bottom margin 96 dp (above the reply bar); add an
-   `OnLayoutChangeListener` so bounds stay correct.
-4. Draw a white outlined ghost (wavy bottom, eyes, mouth) with stroke alpha ~150 and a subtle dark
+3. Find the largest visible story-content frame under the root whose bottom is at least ~40 dp
+   above the root bottom (phone: `RoundedCornerFrameLayout` `[0,211][1224,2387]`). Do **not**
+   anchor to the fragment root or `ReboundViewPager`: both extend behind the reply bar, and a fixed
+   `96 dp` bottom margin is wrong across densities/layouts.
+4. Cache that frame's measured visible rect, refresh it in `OnLayoutChangeListener`, and place the
+   badge 36 dp with 16 dp insets from its right and bottom edges. If small Like/Share `ImageView`s
+   overlap the corner (MuMu), use their top edge as the bottom bound.
+5. Draw a white outlined ghost (wavy bottom, eyes, mouth) with stroke alpha ~150 and a subtle dark
    backing stroke for contrast.
-5. Remove the drawable/listener in `onPause` and when anonymous is switched OFF.
+6. Remove the drawable/listener in `onPause` and when anonymous is switched OFF.
 
-Verified on the emulator: badge visible with anonymous ON, absent with OFF.
+Verified on the phone: 16 dp above the story image bottom, clear of the reply bar. Verified on the
+emulator: visible with anonymous ON and lifted above the action icons; absent with OFF.
 
 ### 8.4 Insert a menu row
 
