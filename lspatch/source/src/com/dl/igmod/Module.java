@@ -435,6 +435,10 @@ final class Settings {
                 }
             });
 
+            SettingsIconDrawable.attach(row1, ctx, SettingsIconDrawable.GHOST);
+            SettingsIconDrawable.attach(row2, ctx, SettingsIconDrawable.DOWNLOAD);
+            SettingsIconDrawable.attach(row3, ctx, SettingsIconDrawable.FOLLOWER);
+
             ll.addView(row1);
             ll.addView(row2);
             ll.addView(row3);

@@ -20,7 +20,7 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Module | `com.dl.igmod` |
 | Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54` |
+| SHA-256 | `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -179,6 +179,9 @@ XposedHelpers.findAndHookMethod(oh, "A03", ap, String.class, String.class,
 ---
 
 ## 5. Profile Mod Settings button
+
+The settings dialog uses green line icons beside each row: a ghost for anonymous view, a download
+arrow, and a person with a check for the follower badge.
 
 ### 5.1 Runtime stack (when "Edit profile" is set)
 
@@ -508,4 +511,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54`.
+- Final artifact hash: `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1`.

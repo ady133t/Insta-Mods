@@ -13,7 +13,7 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 | APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` (GitHub Release asset) |
 | Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54` |
+| SHA-256 | `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1` |
 | Package | `com.instagram.android` |
 | Version | 452.0.0.48.64 (versionCode 385810270) |
 | ABI | arm64-v8a |
@@ -43,9 +43,9 @@ Supporting docs:
 
 - **Mod Settings** button on your own profile, centered below Edit/Share.
   Opens a native dialog with:
-  - Anonymous story view: ON/OFF
-  - Download (Stories,Reels,Feeds): ON/OFF
-  - Follower badge: ON/OFF
+  - Anonymous story view: ON/OFF — ghost icon
+  - Download (Stories,Reels,Feeds): ON/OFF — download icon
+  - Follower badge: ON/OFF — follower icon
 - When Anonymous story view is ON, a 36 dp semi-transparent ghost badge is drawn inside the
   bottom-right corner of the story image, with matching ~12 dp visible spacing on its right and
   bottom edges (above the reply bar). On layouts where the Like/Share icons overlap that corner,

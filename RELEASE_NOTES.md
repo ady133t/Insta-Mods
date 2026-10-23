@@ -14,12 +14,13 @@ Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
   beside the username. White pill in dark mode, dark pill in light mode; own profile is skipped.
 - Renamed the profile button to **Mod Settings** and added **Follower badge: ON/OFF** to the
   dialog. Disabling removes active badges immediately; the setting persists.
+- Added green line icons to the settings rows: ghost, download arrow, and follower person/check.
 - Verified on the MuMu emulator in dark and light themes; the phone will be updated when it reconnects.
 
 ## Release asset
 - `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk`
 - Size: 165,370,808 bytes
-- SHA-256: `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54`
+- SHA-256: `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1`
 
 ## Features
 - Mod Setting button on your profile with Anonymous story view and
