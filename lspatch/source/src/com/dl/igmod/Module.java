@@ -6,8 +6,16 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,6 +42,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.AndroidAppHelper;
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -125,12 +134,14 @@ public class Module implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = true;
+                    GhostOverlay.showFor(param.thisObject);
                 }
             });
             XposedHelpers.findAndHookMethod("instagram.features.stories.fragment.ReelViewerFragment", cl, "onPause", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = false;
+                    GhostOverlay.hideFor(param.thisObject);
                 }
             });
             Log.i(TAG, "story hook");
@@ -315,7 +326,7 @@ final class Profile {
             btn.setTextSize(14f);
             btn.setGravity(Gravity.CENTER);
             GradientDrawable bg = new GradientDrawable();
-            bg.setColor(Color.parseColor("#7B2FF7"));
+            bg.setColor(Color.parseColor("#1ED760"));
             bg.setCornerRadius(Ui.dp(ctx, 20));
             btn.setBackground(bg);
             btn.setPadding(Ui.dp(ctx, 32), Ui.dp(ctx, 10), Ui.dp(ctx, 32), Ui.dp(ctx, 10));
@@ -366,6 +377,7 @@ final class Settings {
                 public void onClick(View v) {
                     Prefs.setAnon(ctx, !Prefs.anon);
                     row1.setText("Anonymous story view: " + (Prefs.anon ? "ON" : "OFF"));
+                    if (!Prefs.anon) GhostOverlay.hideAll();
                 }
             });
 
@@ -472,12 +484,22 @@ final class MenuInjector {
                 Log.i(Module.TAG, "menu: no RecyclerView");
                 return;
             }
-            ViewParent pp = rv.getParent();
-            if (!(pp instanceof LinearLayout)) {
-                Log.i(Module.TAG, "menu: parent is " + (pp == null ? "null" : pp.getClass().getName()));
+            LinearLayout parent = null;
+            View v = rv;
+            for (int i = 0; i < 5; i++) {
+                ViewParent p = v.getParent();
+                if (!(p instanceof View)) break;
+                View pv = (View) p;
+                if (pv instanceof LinearLayout && ((LinearLayout) pv).getOrientation() == LinearLayout.VERTICAL) {
+                    parent = (LinearLayout) pv;
+                    break;
+                }
+                v = pv;
+            }
+            if (parent == null) {
+                Log.i(Module.TAG, "menu: no vertical LinearLayout");
                 return;
             }
-            LinearLayout parent = (LinearLayout) pp;
             if (Ui.hasTag(parent, "DL_MENU_ROW")) return;
             Object vis = VisibleMedia.findAt(anchor.getRootView());
             final Object chosen = vis != null ? vis : menuMedia;
@@ -486,8 +508,15 @@ final class MenuInjector {
             TextView row = new TextView(ctx);
             row.setText("Download");
             row.setTextSize(16f);
+            row.setTypeface(Typeface.DEFAULT_BOLD);
             row.setTextColor(Color.WHITE);
-            row.setPadding(Ui.dp(ctx, 32), Ui.dp(ctx, 24), Ui.dp(ctx, 32), Ui.dp(ctx, 24));
+            row.setGravity(Gravity.CENTER);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(Color.parseColor("#1ED760"));
+            bg.setCornerRadius(Ui.dp(ctx, 24));
+            row.setBackground(bg);
+            row.setPadding(Ui.dp(ctx, 24), Ui.dp(ctx, 12), Ui.dp(ctx, 24), Ui.dp(ctx, 12));
+            row.setElevation(Ui.dp(ctx, 4));
             row.setTag("DL_MENU_ROW");
             row.setClickable(true);
             row.setOnClickListener(new View.OnClickListener() {
@@ -496,11 +525,12 @@ final class MenuInjector {
                     Downloader.downloadMenu(v.getContext(), chosen);
                 }
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            int idx = parent.indexOfChild(rv);
-            if (idx < 0) idx = 0;
-            parent.addView(row, idx, lp);
-            row.bringToFront();
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 48));
+            lp.leftMargin = Ui.dp(ctx, 24);
+            lp.rightMargin = Ui.dp(ctx, 24);
+            lp.topMargin = Ui.dp(ctx, 12);
+            lp.bottomMargin = Ui.dp(ctx, 8);
+            parent.addView(row, 0, lp);
             final ViewGroup touchParent = parent;
             final TextView touchRow = row;
             touchParent.post(new Runnable() {
@@ -514,7 +544,7 @@ final class MenuInjector {
                     }
                 }
             });
-            Log.i(Module.TAG, "menu row added at " + idx);
+            Log.i(Module.TAG, "menu button added at top");
         } catch (Throwable t) {
             Log.e(Module.TAG, "menu inject failed", t);
         }

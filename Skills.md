@@ -378,21 +378,37 @@ Hook `TextView.setText`; when the string is `"Edit profile"`:
 
 Avoid `Java.choose` loops; the one-shot setText trigger is cheap.
 
+### 8.3b Story ghost badge overlay
+
+When anonymous view is ON, add a small semi-transparent badge to the story viewer:
+
+1. Hook `ReelViewerFragment.onResume`; get the fragment root via `getView()`.
+2. Add a custom `GhostDrawable` to `root.getOverlay()` (a `ViewOverlay` drawable), so it does not
+   affect layout or intercept touches.
+3. Position it at 36 dp, right margin 16 dp, bottom margin 96 dp (above the reply bar); add an
+   `OnLayoutChangeListener` so bounds stay correct.
+4. Draw a white outlined ghost (wavy bottom, eyes, mouth) with stroke alpha ~150 and a subtle dark
+   backing stroke for contrast.
+5. Remove the drawable/listener in `onPause` and when anonymous is switched OFF.
+
+Verified on the emulator: badge visible with anonymous ON, absent with OFF.
+
 ### 8.4 Insert a menu row
 
 Hook `TextView.setText` for `"Not interested"`, `"AI info"`, `"Report"`.
 Throttle (one injection per ~1.2 s), then after ~300 ms:
 
 1. from the anchor, climb to the menu `RecyclerView`;
-2. take its parent `LinearLayout`;
+2. climb from the RecyclerView up to 5 parents to the first **vertical** `LinearLayout`;
 3. check for the `DL_MENU_ROW` tag;
-4. add a `TextView("Download")` at the RecyclerView index;
-5. add a `TouchDelegate` from the row's hit rect on the parent so taps reach it even when the
+4. create a rounded green `TextView("Download")`: `GradientDrawable #1ED760`, corner 24 dp,
+   white bold 16 sp centered, height 48 dp, side margins 24 dp, elevation 4 dp;
+5. add it at **index 0** of that LinearLayout to pin it to the top; do not call `bringToFront()`;
+6. add a `TouchDelegate` from the button's hit rect on the parent so taps reach it even when the
    RecyclerView overlaps the row;
-6. click → downloader.
+7. click -> downloader.
 
-Menu layout varies between post types; the row may appear at the top or bottom. The TouchDelegate
-makes touch reliable.
+The top button was verified on the emulator in r3.
 
 ### 8.5 Exact Media for the visible post/slide
 

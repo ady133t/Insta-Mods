@@ -18,9 +18,9 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Base | clean apktool rebuild, no Frida/gadget |
 | Patch framework | JingMatrix LSPatch v1.2 (487) |
 | Module | `com.dl.igmod` |
-| Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r2.apk` |
-| Size | 165,366,712 bytes |
-| SHA-256 | `BCB019E152A5CFBD935A1CD398D374D7B487C616A7530871390A46A02A62C15C` |
+| Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
+| Size | 165,370,808 bytes |
+| SHA-256 | `C25DAEC1A0FDF1F86DCB7903F498368F50C920E452D73D1D272004F9A21909D1` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -215,7 +215,7 @@ Hook `TextView.setText` (`CharSequence` and `int` overloads). On `"Edit profile"
    `FollowChainingButton`.
 4. Use that ancestor's parent (`LinearLayout`) and insert a holder after the row.
 5. Guard with tag `MOD_SETTING_BTN` (both holder and button).
-6. Button: purple `GradientDrawable` `#7B2FF7`, white 14sp text, centered, rounded 20dp,
+6. Button: green `GradientDrawable` `#1ED760`, white 14sp text, centered, rounded 20dp,
    padding 32/10 dp.
 7. Click shows a native `AlertDialog` with two clickable `TextView` rows:
    - Anonymous story view: ON/OFF
@@ -224,7 +224,7 @@ Hook `TextView.setText` (`CharSequence` and `int` overloads). On `"Edit profile"
 The header sometimes rebuilds; the setText hook re-fires and the tag check avoids duplicates.
 Logs on failure: `profile row not found`; on success: `profile button added`.
 
-The button appeared correctly on MuMu and the phone (purple pill below Edit/Share).
+The button appeared correctly on MuMu and the phone (green pill below Edit/Share).
 
 ---
 
@@ -260,22 +260,28 @@ Hook `TextView.setText` for:
 Throttle one injection per ~1.2 s, then after 300 ms:
 
 1. From the anchor TextView, climb up to 15 parents to a `RecyclerView`.
-2. Take `rv.getParent()`; in observed menus it is a `LinearLayout`.
+2. From the RecyclerView, climb up to 5 parents to the first **vertical** `LinearLayout`;
+   fall back to no injection if none is found.
 3. Check the parent children for tag `DL_MENU_ROW`.
-4. Create `TextView("Download")`, white 16sp, padding 32/24 dp, tag `DL_MENU_ROW`.
-5. Add at `parent.indexOfChild(rv)` with `LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)`.
-6. `row.bringToFront()`.
-7. Post a `TouchDelegate` on the parent using the row's hit rect. This is required because the
+4. Create `TextView("Download")` as a rounded button:
+   - `GradientDrawable` color `#1ED760`, corner radius 24 dp
+   - white bold 16 sp text, `Gravity.CENTER`
+   - height 48 dp, horizontal margins 24 dp, top/bottom margins 12/8 dp
+   - elevation 4 dp, tag `DL_MENU_ROW`
+5. Add at **index 0** of the vertical LinearLayout, pinning it to the top of the sheet.
+   Do **not** call `bringToFront()`: on a LinearLayout it can reorder the child to the end.
+6. Post a `TouchDelegate` on the parent using the button's hit rect. This is required because the
    RecyclerView can visually overlap the injected row and swallow taps.
-8. Click → downloader.
+7. Click -> downloader.
 
-Observed row positions varied with menu contents:
-- post menu with “Why you're seeing this”: Download around y≈958 (900x2000 screenshot coords)
-- post menu without it: y≈1062
-- story menu: Download at the bottom, y≈1370–1418
+Observed in r3:
+- The button is pinned above the menu list (post and story menus) with a rounded green background;
+  a tap via the TouchDelegate starts the correct download.
+- Older builds inserted it at `parent.indexOfChild(rv)` and varied between top/bottom depending on
+  the menu type; that behavior was replaced by index 0.
 
 Gating: if `Prefs.download` is false, `MenuInjector.inject` returns before adding anything.
-Verified: toggling Download OFF hides the Download row; ON shows it.
+Verified: toggling Download (Stories,Reels,Feeds) OFF hides the Download button; ON shows it.
 
 ---
 
@@ -372,6 +378,12 @@ req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
   `onViewCreated(...)`.
 - Lifecycle hooks were installed and logged `story hook`, but the `Story.active` flag was not
   reliable on the arm64 phone for the seen hook. Final stealth uses `Prefs.anon` only.
+- **Ghost badge overlay**: on `ReelViewerFragment.onResume`, when `Prefs.anon` is true, the module
+  gets the fragment root via `getView()` and adds a custom `GhostDrawable` to its `ViewOverlay`
+  (36 dp, right margin 16 dp, bottom margin 96 dp above the reply bar, stroke alpha 150). It is
+  removed on `onPause`/when anonymous is switched OFF. Verified on the emulator: badge appeared
+  when ON and was absent when OFF. The icon is a custom-drawn outline ghost (wavy bottom, eyes,
+  mouth), matching the supplied ghost motif.
 - Owner (if needed) comes from view content descriptions containing `"'s story"`; slide index from
   `SegmentedProgressBar.getCurrentSegment()/getSegments()`.
 - For downloads, the exact visible slide is resolved by the same hit-test/listener path; the current
@@ -445,9 +457,12 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 
 ## 11. Feature verification evidence
 
-- **Profile UI**: purple Mod Setting pill appeared below Edit/Share on MuMu and phone;
-  dialog toggles updated/persisted (`shared_prefs/igmod.xml`).
-- **Menu row**: `[DLM] menu row added at ...`; Download visible; toggling Download OFF hides it.
+- **Profile UI**: green Mod Setting pill appeared below Edit/Share on the r3 emulator and phone
+  builds; dialog toggles updated/persisted (`shared_prefs/igmod.xml`).
+- **Menu button**: `[DLM] menu button added at top`; rounded green Download button pinned at the
+  top of the sheet; tapping downloads the visible media; toggling the setting OFF hides it.
+- **Ghost badge (MuMu)**: appeared at the story viewer's bottom-right when anonymous was ON;
+  absent when anonymous was OFF.
 - **Feed download (MuMu)**: visible entrepreneursonig Jensen Huang post → media
   `4013583233155739720_66535610953`, MP4, ffmpeg first frame matched the on-screen video.
 - **Story download (MuMu)**: visible houseofhighlights Q&A slide → media
@@ -471,4 +486,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `BCB019E152A5CFBD935A1CD398D374D7B487C616A7530871390A46A02A62C15C`.
+- Final artifact hash: `C25DAEC1A0FDF1F86DCB7903F498368F50C920E452D73D1D272004F9A21909D1`.
