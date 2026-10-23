@@ -61,8 +61,10 @@ final class GhostOverlay {
             final Context ctx = root.getContext();
             final GhostDrawable d = new GhostDrawable();
             final int size = Ui.dp(ctx, 36);
-            final int right = Ui.dp(ctx, 16);
-            final int bottom = Ui.dp(ctx, 16);
+            // The ghost path has ~5.5 dp of transparent padding on each side.
+            // These bounds leave ~12.5 dp of visible space on the right and bottom.
+            final int right = Ui.dp(ctx, 7);
+            final int bottom = Ui.dp(ctx, 12);
 
             final Holder h = new Holder(d, null, findMediaView(root));
             h.listener = new View.OnLayoutChangeListener() {

@@ -20,7 +20,7 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Module | `com.dl.igmod` |
 | Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `52027D722E22C5270CE4F58B982867278B036D8EFDC3E03D3C963B351B014CE4` |
+| SHA-256 | `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -382,8 +382,9 @@ req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
   gets the fragment root via `getView()` and adds a custom `GhostDrawable` to its `ViewOverlay`
   (36 dp, stroke alpha 150). The anchor is the largest visible story-content frame that ends above
   the bottom chrome, not the fragment root or `ReboundViewPager` (which includes the reply bar).
-  Its measured visible rect is cached and refreshed on layout; the badge is inset 16 dp from that
-  frame's right and bottom edges. On layouts where small Like/Share `ImageView`s overlap the
+  Its measured visible rect is cached and refreshed on layout; the bounds are inset so the visible
+  ghost stroke has matching ~12 dp spacing on the frame's right and bottom edges (the drawable has
+  ~5.5 dp transparent side padding). On layouts where small Like/Share `ImageView`s overlap the
   corner (MuMu), it lifts just above their top edge. It is removed on `onPause`/when anonymous is
   switched OFF. Phone: `RoundedCornerFrameLayout` visible rect `[0,211][1224,2387]`, badge above
   the reply bar. The icon is a custom-drawn outline ghost (wavy bottom, eyes, mouth), matching the
@@ -465,9 +466,9 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
   builds; dialog toggles updated/persisted (`shared_prefs/igmod.xml`).
 - **Menu button**: `[DLM] menu button added at top`; rounded green Download button pinned at the
   top of the sheet; tapping downloads the visible media; toggling the setting OFF hides it.
-- **Ghost badge (phone)**: final r3 places it inside the story image's bottom-right corner,
-  16 dp above the visible media bottom and 16 dp from the right edge, clear of the reply bar.
-  Appeared when anonymous was ON; absent when anonymous was OFF.
+- **Ghost badge (phone)**: final r3 places it inside the story image's bottom-right corner, with
+  matching ~12 dp visible spacing from the right edge and visible media bottom, clear of the
+  reply bar. Appeared when anonymous was ON; absent when anonymous was OFF.
 - **Ghost badge (MuMu)**: final r3 keeps it in the same corner but lifts it above the overlapping
   Like/Share icon row; it no longer covers those icons. Appeared when anonymous was ON.
 - **Feed download (MuMu)**: visible entrepreneursonig Jensen Huang post → media
@@ -493,4 +494,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `52027D722E22C5270CE4F58B982867278B036D8EFDC3E03D3C963B351B014CE4`.
+- Final artifact hash: `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2`.

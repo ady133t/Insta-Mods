@@ -390,14 +390,16 @@ When anonymous view is ON, add a small semi-transparent badge to the story viewe
    anchor to the fragment root or `ReboundViewPager`: both extend behind the reply bar, and a fixed
    `96 dp` bottom margin is wrong across densities/layouts.
 4. Cache that frame's measured visible rect, refresh it in `OnLayoutChangeListener`, and place the
-   badge 36 dp with 16 dp insets from its right and bottom edges. If small Like/Share `ImageView`s
-   overlap the corner (MuMu), use their top edge as the bottom bound.
+   badge 36 dp with bounds inset so the visible stroke has matching ~12 dp spacing on the right and
+   bottom (the ghost path has ~5.5 dp transparent padding per side: use 7 dp right, 12 dp bottom).
+   If small Like/Share `ImageView`s overlap the corner (MuMu), use their top edge as the bottom bound.
 5. Draw a white outlined ghost (wavy bottom, eyes, mouth) with stroke alpha ~150 and a subtle dark
    backing stroke for contrast.
 6. Remove the drawable/listener in `onPause` and when anonymous is switched OFF.
 
-Verified on the phone: 16 dp above the story image bottom, clear of the reply bar. Verified on the
-emulator: visible with anonymous ON and lifted above the action icons; absent with OFF.
+Verified on the phone: matching ~12 dp visible spacing on the right and bottom, clear of the reply
+bar. Verified on the emulator: visible with anonymous ON and lifted above the action icons; absent
+with OFF.
 
 ### 8.4 Insert a menu row
 

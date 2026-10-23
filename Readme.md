@@ -13,7 +13,7 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 | APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` (GitHub Release asset) |
 | Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `52027D722E22C5270CE4F58B982867278B036D8EFDC3E03D3C963B351B014CE4` |
+| SHA-256 | `0964B62A9E6E1BB648C816290BFB81597B8761B9D49F324180172B261EEF7DD2` |
 | Package | `com.instagram.android` |
 | Version | 452.0.0.48.64 (versionCode 385810270) |
 | ABI | arm64-v8a |
@@ -28,9 +28,10 @@ because of their size.
 Build `r2`: renamed the Mod Settings row to **Download (Stories,Reels,Feeds)**.
 Build `r3`: moved the menu Download row to the **top**, turned it into a rounded green
 `#1ED760` button, and added the semi-transparent ghost badge overlay in the story viewer when
-anonymous view is ON. The badge is anchored to the visible story-content frame, 16 dp from its
-right and bottom edges, and lifts above Like/Share only on layouts where those icons overlap the
-corner. Deployed and verified on the MuMu emulator and Infinix X6873 phone.
+anonymous view is ON. The badge is anchored to the visible story-content frame, with matching
+~12 dp visible spacing on its right and bottom edges, and lifts above Like/Share only on layouts
+where those icons overlap the corner. Deployed and verified on the MuMu emulator and Infinix
+X6873 phone.
 
 Supporting docs:
 
@@ -45,8 +46,9 @@ Supporting docs:
   - Anonymous story view: ON/OFF
   - Download (Stories,Reels,Feeds): ON/OFF
 - When Anonymous story view is ON, a 36 dp semi-transparent ghost badge is drawn inside the
-  bottom-right corner of the story image, 16 dp from its right and bottom edges (above the reply
-  bar). On layouts where the Like/Share icons overlap that corner, the badge moves just above them.
+  bottom-right corner of the story image, with matching ~12 dp visible spacing on its right and
+  bottom edges (above the reply bar). On layouts where the Like/Share icons overlap that corner,
+  the badge moves just above them.
 - Settings persist in `SharedPreferences("igmod")` (`anon_story`, `download_enabled`).
 - **Download** button pinned at the top of post and story overflow menus, styled as a rounded
   green button. Shown only when Download (Stories,Reels,Feeds) is ON.
