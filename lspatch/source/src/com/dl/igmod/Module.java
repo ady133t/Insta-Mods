@@ -245,6 +245,7 @@ final class Prefs {
     static SharedPreferences sp;
     static volatile boolean anon = true;
     static volatile boolean download = true;
+    static volatile boolean follower = true;
 
     static synchronized void init(Context c) {
         if (c == null) return;
@@ -252,6 +253,7 @@ final class Prefs {
             sp = c.getSharedPreferences("igmod", 0);
             anon = sp.getBoolean("anon_story", true);
             download = sp.getBoolean("download_enabled", true);
+            follower = sp.getBoolean("follower_badge", true);
         } catch (Throwable t) {
         }
     }
@@ -270,6 +272,15 @@ final class Prefs {
         try {
             if (sp == null) init(c);
             if (sp != null) sp.edit().putBoolean("download_enabled", v).apply();
+        } catch (Throwable t) {
+        }
+    }
+
+    static synchronized void setFollower(Context c, boolean v) {
+        follower = v;
+        try {
+            if (sp == null) init(c);
+            if (sp != null) sp.edit().putBoolean("follower_badge", v).apply();
         } catch (Throwable t) {
         }
     }
@@ -336,7 +347,7 @@ final class Profile {
 
             final Context ctx = anchor.getContext();
             TextView btn = new TextView(ctx);
-            btn.setText("Mod Setting");
+            btn.setText("Mod Settings");
             btn.setTextColor(Color.WHITE);
             btn.setTextSize(14f);
             btn.setGravity(Gravity.CENTER);
@@ -409,8 +420,24 @@ final class Settings {
                 }
             });
 
+            final TextView row3 = new TextView(ctx);
+            row3.setText("Follower badge: " + (Prefs.follower ? "ON" : "OFF"));
+            row3.setTextSize(16f);
+            row3.setTextColor(Color.WHITE);
+            row3.setPadding(Ui.dp(ctx, 12), Ui.dp(ctx, 18), Ui.dp(ctx, 12), Ui.dp(ctx, 18));
+            row3.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Prefs.setFollower(ctx, !Prefs.follower);
+                    row3.setText("Follower badge: " + (Prefs.follower ? "ON" : "OFF"));
+                    if (Prefs.follower) FollowerBadge.refreshLast();
+                    else FollowerBadge.hideAll();
+                }
+            });
+
             ll.addView(row1);
             ll.addView(row2);
+            ll.addView(row3);
 
             AlertDialog.Builder b = new AlertDialog.Builder(ctx);
             b.setTitle("Mod Settings");

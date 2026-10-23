@@ -413,6 +413,9 @@ with OFF.
 6. Color the pill from `uiMode`: white/dark text in dark mode, black/white in light mode. Use a
    neutral theme-matched pill for **Not Follower**.
 7. Find/update the pill by tag to avoid duplicates across retries.
+8. Gate the whole feature on `Prefs.follower` (`follower_badge`). Add a **Follower badge: ON/OFF**
+   row to Mod Settings; OFF removes active badges immediately, ON refreshes the last profile.
+   The profile button label is **Mod Settings**.
 
 Verified: `lily_girl90` (follower) and `tonyautomation` (not follower), in dark and light themes.
 
@@ -476,7 +479,7 @@ Module logs include hook install, `menu row added`, `seen suppressed`, `download
 
 ### 9.2 UI
 
-- Profile: Mod Setting button visible below Edit/Share; dialog toggles update text and
+- Profile: Mod Settings button visible below Edit/Share; dialog toggles update text and
   `shared_prefs/igmod.xml`.
 - Menu: Download row visible; toggling Download OFF must hide it.
 - Story: open a story, check `seen suppressed`; toggle anonymous OFF and verify it forwards.

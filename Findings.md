@@ -20,7 +20,7 @@ Companion docs: [`Readme.md`](Readme.md) (artifact/install) and [`Skills.md`](Sk
 | Module | `com.dl.igmod` |
 | Final APK | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
 | Size | 165,370,808 bytes |
-| SHA-256 | `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7` |
+| SHA-256 | `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54` |
 | Signer | Android debug key (`fd55cd8d6d8b8065bd2e398af56f3d5b167269f4a71d36843900f801fb836b97`) |
 
 Test devices:
@@ -178,7 +178,7 @@ XposedHelpers.findAndHookMethod(oh, "A03", ap, String.class, String.class,
 
 ---
 
-## 5. Profile Mod Setting button
+## 5. Profile Mod Settings button
 
 ### 5.1 Runtime stack (when "Edit profile" is set)
 
@@ -398,7 +398,9 @@ req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
   The badge is inserted in the top toolbar's horizontal `IgLinearLayout`, immediately after the
   username block. It reads `uiMode` to match the app theme: white pill with dark text in dark mode,
   black pill with white text in light mode; the negative state uses a neutral theme-matched pill.
-  Own profiles are skipped by detecting the `Edit profile` label. Verified:
+  Visibility is controlled by the **Follower badge: ON/OFF** row in Mod Settings
+  (`follower_badge`); disabling removes existing badges immediately. Own profiles are skipped by
+  detecting the `Edit profile` label. Verified:
   `lily_girl90` → `followed_by=true` / **Follower**; `tonyautomation` → **Not Follower**.
 - For downloads, the exact visible slide is resolved by the same hit-test/listener path; the current
   slide's media ID is selected. Verified:
@@ -471,7 +473,7 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 
 ## 11. Feature verification evidence
 
-- **Profile UI**: green Mod Setting pill appeared below Edit/Share on the r3 emulator and phone
+- **Profile UI**: green Mod Settings pill appeared below Edit/Share on the r3 emulator and phone
   builds; dialog toggles updated/persisted (`shared_prefs/igmod.xml`).
 - **Menu button**: `[DLM] menu button added at top`; rounded green Download button pinned at the
   top of the sheet; tapping downloads the visible media; toggling the setting OFF hides it.
@@ -506,4 +508,4 @@ Feed video playback still drives CPU high (native IG behavior), e.g. ~31% while 
 - Native smali patching is complicated on Windows by case-only class collisions; dex-level editing
   (dexlib2) is the safer native route if ever needed.
 - `jar uf`/7-Zip must not be used to swap the embedded module; repatch with LSPatch.
-- Final artifact hash: `1F4BD24F71D5589AEF7DAFD2C6E90B123C4C9ABA798D1A410E754EB923E4C4F7`.
+- Final artifact hash: `3F3C605E1A81F7B897FE519A279FCBFB2869F08600E4E2329B9092A4AD167F54`.
