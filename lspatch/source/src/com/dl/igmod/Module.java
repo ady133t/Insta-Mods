@@ -293,6 +293,12 @@ public class Module implements IXposedHookLoadPackage {
                     try {
                         if (param.args != null && param.args.length > 0 && param.args[0] instanceof View) {
                             CommentStore.onMenuAnchor((View) param.args[0]);
+                            try {
+                                if (param.thisObject instanceof android.widget.PopupWindow) {
+                                    CommentCopy.setPopup((android.widget.PopupWindow) param.thisObject);
+                                }
+                            } catch (Throwable t) {
+                            }
                         }
                     } catch (Throwable t) {
                     }
@@ -814,6 +820,8 @@ final class MenuInjector {
     static boolean isCommentMenu(ViewGroup root) {
         final List<String> labels = new ArrayList<String>();
         collectText(root, labels);
+        boolean share = false, report = false, block = false, replyLike = false;
+        boolean feedOnly = false;
         for (String s : labels) {
             if (s.contains("reply with a reel")
                     || s.contains("delete comment")
@@ -821,10 +829,22 @@ final class MenuInjector {
                     || s.contains("unpin comment")
                     || s.contains("view replies")
                     || s.contains("reply")) {
-                return true;
+                replyLike = true;
+            }
+            if (s.contains("share")) share = true;
+            if (s.contains("report")) report = true;
+            if (s.contains("block")) block = true;
+            if (s.contains("add to saved") || s.contains("not interested")
+                    || s.contains("why you're seeing") || s.contains("go to post")
+                    || s.contains("unfollow") || s.contains("copy link")
+                    || s.contains("about this account") || s.contains("mute")) {
+                feedOnly = true;
             }
         }
-        return false;
+        if (replyLike) return true;
+        // Some IG builds show comment menus with only Share / Report / Block / Dismiss.
+        // Post overflow menus always carry one of the feedOnly rows, so they stay excluded.
+        return !feedOnly && share && report && block;
     }
 
     static void collectText(View v, List<String> out) {

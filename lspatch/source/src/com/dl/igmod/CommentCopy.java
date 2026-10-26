@@ -1337,6 +1337,25 @@ final class CommentStore {
 
 /** Adds a Copy comment button to the comment long-press menu. */
 final class CommentCopy {
+    private static WeakReference<android.widget.PopupWindow> POPUP =
+            new WeakReference<android.widget.PopupWindow>(null);
+
+    /** Captured from the PopupWindow show hooks so the window can be resized after injection. */
+    static void setPopup(android.widget.PopupWindow popup) {
+        try {
+            if (popup != null) POPUP = new WeakReference<android.widget.PopupWindow>(popup);
+        } catch (Throwable t) {
+        }
+    }
+
+    private static android.widget.PopupWindow popup() {
+        try {
+            return POPUP.get();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     static void inject(final LinearLayout parent, final Context ctx) {
         try {
             if (parent == null || ctx == null) return;
@@ -1349,58 +1368,94 @@ final class CommentCopy {
 
             TextView row = new TextView(ctx);
             row.setText("Copy comment");
-            row.setTextSize(16f);
+            row.setTextSize(15f);
             row.setTypeface(Typeface.DEFAULT_BOLD);
             row.setTextColor(Color.WHITE);
             row.setGravity(Gravity.CENTER);
+            row.setSingleLine(true);
+            row.setMinWidth(Ui.dp(ctx, 150));
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(Color.parseColor("#1ED760"));
             bg.setCornerRadius(Ui.dp(ctx, 24));
             row.setBackground(bg);
-            row.setPadding(Ui.dp(ctx, 24), Ui.dp(ctx, 12), Ui.dp(ctx, 24), Ui.dp(ctx, 12));
+            row.setPadding(Ui.dp(ctx, 20), Ui.dp(ctx, 12), Ui.dp(ctx, 20), Ui.dp(ctx, 12));
             row.setElevation(Ui.dp(ctx, 4));
             row.setTag("DL_COPY_ROW");
             row.setClickable(true);
             row.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    try {
-                        ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (cm != null) {
-                            cm.setPrimaryClip(ClipData.newPlainText("Instagram comment", text));
-                            Toast.makeText(ctx, "Comment copied", Toast.LENGTH_SHORT).show();
-                            Log.i("DLM", "comment copied: " + text);
-                        }
-                    } catch (Throwable t) {
-                        Log.e("DLM", "copy comment failed", t);
-                    }
+                    copyComment(ctx, text);
                 }
             });
 
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 48));
-            lp.leftMargin = Ui.dp(ctx, 24);
-            lp.rightMargin = Ui.dp(ctx, 24);
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.gravity = Gravity.CENTER_HORIZONTAL;
             lp.topMargin = Ui.dp(ctx, 12);
-            lp.bottomMargin = Ui.dp(ctx, 8);
+            lp.bottomMargin = Ui.dp(ctx, 4);
             parent.addView(row, 0, lp);
 
-            final ViewGroup touchParent = parent;
-            final TextView touchRow = row;
-            touchParent.post(new Runnable() {
+            // Some IG builds route popup touches through the menu container, so the row's own
+            // click listener never fires. Catch the release on the container as well.
+            final TextView tapRow = row;
+            parent.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void run() {
+                public boolean onTouch(View v, android.view.MotionEvent e) {
                     try {
-                        Rect r = new Rect();
-                        touchRow.getHitRect(r);
-                        touchParent.setTouchDelegate(new TouchDelegate(r, touchRow));
+                        if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+                            int[] rl = new int[2];
+                            tapRow.getLocationOnScreen(rl);
+                            float x = e.getRawX();
+                            float y = e.getRawY();
+                            if (x >= rl[0] && x <= rl[0] + tapRow.getWidth()
+                                    && y >= rl[1] && y <= rl[1] + tapRow.getHeight()) {
+                                copyComment(ctx, text);
+                            }
+                        }
                     } catch (Throwable t) {
                     }
+                    return false;
                 }
             });
             Log.i("DLM", "copy comment row added");
+            // PopupWindow keeps its original size unless told otherwise; without this the new row
+            // is drawn outside the window's touchable area and taps dismiss the menu instead.
+            parent.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        android.widget.PopupWindow pw = popup();
+                        if (pw != null && pw.isShowing()) {
+                            pw.update(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT);
+                            Log.i("DLM", "copy comment popup resized");
+                        }
+                    } catch (Throwable t) {
+                        Log.e("DLM", "copy comment popup resize failed", t);
+                    }
+                }
+            });
         } catch (Throwable t) {
             Log.e("DLM", "copy comment inject failed", t);
+        }
+    }
+
+    /** Shared by the row click and the container touch fallback. */
+    static void copyComment(Context ctx, String text) {
+        try {
+            ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm == null) return;
+            cm.setPrimaryClip(ClipData.newPlainText("Instagram comment", text));
+            Toast.makeText(ctx, "Comment copied", Toast.LENGTH_SHORT).show();
+            Log.i("DLM", "comment copied: " + text);
+        } catch (Throwable t) {
+            Log.e("DLM", "copy comment failed", t);
+        }
+        try {
+            android.widget.PopupWindow pw = popup();
+            if (pw != null && pw.isShowing()) pw.dismiss();
+        } catch (Throwable t) {
         }
     }
 }
