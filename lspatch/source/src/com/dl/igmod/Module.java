@@ -3,6 +3,8 @@ package com.dl.igmod;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
@@ -23,16 +25,21 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
@@ -40,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -69,6 +77,9 @@ public class Module implements IXposedHookLoadPackage {
         hookStory(cl);
         hookMedia(cl);
         hookProfileText(cl);
+        hookCommentLongPress(cl);
+        hookRendercoreText(cl);
+        hookAccessibilityPretend(cl);
         hookFollowerBadge(cl);
     }
 
@@ -237,6 +248,179 @@ public class Module implements IXposedHookLoadPackage {
             Log.i(TAG, "text hooks");
         } catch (Throwable t) {
             Log.e(TAG, "text hooks failed", t);
+        }
+    }
+
+    static void hookCommentLongPress(final ClassLoader cl) {
+        try {
+            // The long-pressed view sits inside the exact comment row, so it is the most
+            // direct source of the comment text.
+            Class<?> view = XposedHelpers.findClass("android.view.View", cl);
+            XC_MethodHook longPress = new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.thisObject instanceof View) {
+                            CommentStore.onLongPress((View) param.thisObject);
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            XposedBridge.hookAllMethods(view, "performLongClick", longPress);
+
+            Class<?> activity = XposedHelpers.findClass("android.app.Activity", cl);
+            XposedBridge.hookAllMethods(activity, "dispatchTouchEvent", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.thisObject instanceof Activity
+                                && param.args != null && param.args.length > 0
+                                && param.args[0] instanceof MotionEvent) {
+                            CommentStore.touch((Activity) param.thisObject, (MotionEvent) param.args[0]);
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            });
+
+            // The comment context menu is a PopupWindow anchored to the long-pressed
+            // comment row. Capturing that anchor gives us the exact comment.
+            Class<?> popup = XposedHelpers.findClass("android.widget.PopupWindow", cl);
+            XC_MethodHook anchorHook = new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.args != null && param.args.length > 0 && param.args[0] instanceof View) {
+                            CommentStore.onMenuAnchor((View) param.args[0]);
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            XposedBridge.hookAllMethods(popup, "showAsDropDown", anchorHook);
+            XposedBridge.hookAllMethods(popup, "showAtLocation", anchorHook);
+            Log.i(TAG, "comment capture hooks");
+        } catch (Throwable t) {
+            Log.e(TAG, "comment capture hooks failed", t);
+        }
+    }
+
+    /**
+     * Hook the rendercore text mount so the drawn CharSequence is captured while it is being bound
+     * to its view. Rendercore only keeps that text in the component until the next bind, and it is
+     * never exposed through getText()/accessibility, so this is the only reliable source.
+     */
+    static void hookRendercoreText(final ClassLoader cl) {
+        try {
+            Class<?> textView = XposedHelpers.findClass("com.facebook.rendercore.text.RCTextView", cl);
+            XC_MethodHook mount = new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        if (!(param.thisObject instanceof View)) return;
+                        View v = (View) param.thisObject;
+                        Object direct = null;
+                        Object alt = null;
+                        Object layout = null;
+                        try {
+                            direct = XposedHelpers.getObjectField(v, "A0H");
+                        } catch (Throwable t) {
+                        }
+                        try {
+                            alt = XposedHelpers.getObjectField(v, "A0X");
+                        } catch (Throwable t) {
+                        }
+                        try {
+                            layout = XposedHelpers.getObjectField(v, "A0B");
+                        } catch (Throwable t) {
+                        }
+                        if (direct instanceof CharSequence && ((CharSequence) direct).length() > 0) {
+                            CommentStore.onRenderCoreText(v, (CharSequence) direct);
+                        } else if (alt instanceof CharSequence && ((CharSequence) alt).length() > 0) {
+                            CommentStore.onRenderCoreText(v, (CharSequence) alt);
+                        } else if (layout instanceof android.text.Layout) {
+                            CommentStore.onRenderCoreText(v,
+                                    ((android.text.Layout) layout).getText());
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            // A09(LX/0IGM;)V is the bind/mount entry point in 452.0.0.48.64.
+            XposedBridge.hookAllMethods(textView, "A09", mount);
+            // Defensive: some builds mount through A08()/setLayout().
+            XposedBridge.hookAllMethods(textView, "A08", mount);
+
+            // IG's own layout-driven text view (captions, comment bodies) keeps the drawn text in
+            // an android.text.Layout set through setTextLayout(Layout).
+            try {
+                Class<?> igText = XposedHelpers.findClass(
+                        "com.instagram.ui.widget.textview.IgTextLayoutView", cl);
+                XposedBridge.hookAllMethods(igText, "setTextLayout", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            if (!(param.thisObject instanceof View)) return;
+                            Object layout = XposedHelpers.getObjectField(param.thisObject, "A02");
+                            if (layout instanceof android.text.Layout) {
+                                CommentStore.onRenderCoreText((View) param.thisObject,
+                                        ((android.text.Layout) layout).getText());
+                            }
+                        } catch (Throwable t) {
+                        }
+                    }
+                });
+            } catch (Throwable t) {
+                Log.e(TAG, "ig text layout hook failed", t);
+            }
+
+            // Litho hosts receive the merged row label ("user said body") through
+            // setContentDescription; cache every call so the comment can be resolved later.
+            Class<?> host = XposedHelpers.findClass("com.facebook.litho.ComponentHost", cl);
+            XC_MethodHook descHook = new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        if (!(param.thisObject instanceof View)) return;
+                        if (param.args == null || param.args.length == 0
+                                || !(param.args[0] instanceof CharSequence)) return;
+                        CommentStore.onHostDescription((View) param.thisObject,
+                                (CharSequence) param.args[0]);
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            XposedBridge.hookAllMethods(host, "setContentDescription", descHook);
+            Log.i(TAG, "rendercore text hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "rendercore text hook failed", t);
+        }
+    }
+
+    /**
+     * Litho only materialises the merged "user said body" labels while an accessibility service is
+     * connected (its host delegates query AccessibilityManager). Pretending one is connected makes
+     * IG build those labels eagerly, which is what the copy feature reads.
+     */
+    static void hookAccessibilityPretend(final ClassLoader cl) {
+        try {
+            Class<?> am = XposedHelpers.findClass(
+                    "android.view.accessibility.AccessibilityManager", cl);
+            XC_MethodHook on = new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        param.setResult(Boolean.TRUE);
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            XposedBridge.hookAllMethods(am, "isEnabled", on);
+            XposedBridge.hookAllMethods(am, "isTouchExplorationEnabled", on);
+            Log.i(TAG, "a11y pretend hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "a11y pretend hook failed", t);
         }
     }
 }
@@ -459,15 +643,30 @@ final class MediaTracker {
     static final List<Long> TS = new ArrayList<Long>();
     static final List<Boolean> MAIN = new ArrayList<Boolean>();
 
+    /**
+     * Called for every media object Instagram resolves, including while the feed binds rows
+     * during scrolling, so this must stay cheap: identity checks only, no reflection.
+     */
     static synchronized void add(Object m) {
         try {
             if (m == null) return;
-            String id = idOf(m);
-            if (id == null) return;
             long now = System.currentTimeMillis();
             boolean main = "main".equals(Thread.currentThread().getName());
-            for (int i = 0; i < MEDIA.size(); i++) {
-                if (id.equals(idOf(MEDIA.get(i)))) {
+            int n = MEDIA.size();
+            // Hot path: the same object is re-reported constantly while scrolling.
+            for (int i = n - 1; i >= 0; i--) {
+                if (MEDIA.get(i) == m) {
+                    TS.set(i, now);
+                    MAIN.set(i, main);
+                    return;
+                }
+            }
+            // Otherwise compare the cached ids (already resolved once) against the new id.
+            String id = idOf(m);
+            if (id == null) return;
+            for (int i = n - 1; i >= 0; i--) {
+                Object other = MEDIA.get(i);
+                if (other != null && id.equals(idOf(other))) {
                     TS.set(i, now);
                     MAIN.set(i, main);
                     return;
@@ -476,7 +675,7 @@ final class MediaTracker {
             MEDIA.add(m);
             TS.add(now);
             MAIN.add(main);
-            while (MEDIA.size() > 80) {
+            while (MEDIA.size() > 40) {
                 MEDIA.remove(0);
                 TS.remove(0);
                 MAIN.remove(0);
@@ -512,7 +711,6 @@ final class MediaTracker {
 
 final class MenuInjector {
     static void inject(final TextView anchor, final Object menuMedia) {
-        if (!Prefs.download) return;
         try {
             View cur = anchor;
             ViewGroup rv = null;
@@ -546,6 +744,23 @@ final class MenuInjector {
                 Log.i(Module.TAG, "menu: no vertical LinearLayout");
                 return;
             }
+            if (isCommentMenu(parent)) {
+                Log.i(Module.TAG, "menu: comment menu");
+                final LinearLayout menuParent = parent;
+                final Context menuCtx = anchor.getContext();
+                // The context menu is a PopupWindow anchored to the long-pressed comment row.
+                // Let showAsDropDown/showAtLocation fire first so the anchor hook can record
+                // the exact row before the Copy row is built.
+                Module.MAIN.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        CommentStore.captureForMenu(menuParent);
+                        CommentCopy.inject(menuParent, menuCtx);
+                    }
+                }, 180);
+                return;
+            }
+            if (!Prefs.download) return;
             if (Ui.hasTag(parent, "DL_MENU_ROW")) return;
             Object vis = VisibleMedia.findAt(anchor.getRootView());
             final Object chosen = vis != null ? vis : menuMedia;
@@ -593,6 +808,38 @@ final class MenuInjector {
             Log.i(Module.TAG, "menu button added at top");
         } catch (Throwable t) {
             Log.e(Module.TAG, "menu inject failed", t);
+        }
+    }
+
+    static boolean isCommentMenu(ViewGroup root) {
+        final List<String> labels = new ArrayList<String>();
+        collectText(root, labels);
+        for (String s : labels) {
+            if (s.contains("reply with a reel")
+                    || s.contains("delete comment")
+                    || s.contains("pin comment")
+                    || s.contains("unpin comment")
+                    || s.contains("view replies")
+                    || s.contains("reply")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void collectText(View v, List<String> out) {
+        if (v == null) return;
+        if (v instanceof TextView) {
+            CharSequence t = ((TextView) v).getText();
+            if (t != null) out.add(t.toString().toLowerCase(Locale.US));
+        }
+        CharSequence d = v.getContentDescription();
+        if (d != null) out.add(d.toString().toLowerCase(Locale.US));
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                collectText(g.getChildAt(i), out);
+            }
         }
     }
 }
