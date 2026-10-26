@@ -1,47 +1,25 @@
-# Instagram Mod v452.0.0.48.64 — Build r3 (LSPatch)
+# Instagram Mod v452.0.0.48.64 - Build r4 (LSPatch)
 
 Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
 
-## Changes in r3
-- Both Mod Setting and menu Download buttons now use **#1ED760** (30, 215, 96).
-- Menu Download is pinned at the **top** of post/story ≡ sheets as a rounded button.
-- Anonymous story view now shows a small semi-transparent ghost badge inside the bottom-right
-  corner of the story image, with matching ~12 dp visible spacing on the right and bottom (above
-  the reply bar).
-- **Ghost position fix:** the badge anchors to the visible story-content frame instead of the
-  fragment root, and lifts just above Like/Share only when those icons overlap the corner (MuMu).
-- **Follower indicator:** profiles now show a theme-adaptive **Follower** or **Not Follower** pill
-  beside the username. White pill in dark mode, dark pill in light mode; own profile is skipped.
-- Renamed the profile button to **Mod Settings** and added **Follower badge: ON/OFF** to the
-  dialog. Disabling removes active badges immediately; the setting persists.
-- Added green line icons to the settings rows: ghost, download arrow, and follower person/check.
-- Verified on the MuMu emulator in dark and light themes; the phone will be updated when it reconnects.
+## Changes in r4
+- **Copy comment**: long-press a comment and tap the green **Copy comment** pill to copy that
+  exact comment's text. IG only builds the merged "user said body" row label while an
+  accessibility service is connected, so the module reports one as connected inside the IG
+  process only, caches the labels as Litho pushes them through
+  `ComponentHost.setContentDescription`, and copies the entry nearest the press.
+- Comment menus no longer receive the Download row. Both menu shapes are detected: the
+  `Reply with a reel` variant and the phone variant with only `Share / Report / Block / Dismiss`.
+- The injected row resizes its PopupWindow, otherwise the pill is drawn outside the window's
+  touchable area and taps only dismiss the menu.
+- **Scrolling lag fixed**: the touch hook only records coordinates (no window walk on every
+  finger-down) and the media tracker uses identity checks instead of reflective id lookups.
+
+## Verified
+- Phone (Infinix X6873): long-press comment -> green Copy comment pill -> clipboard contains the
+  exact comment, menu closes; post overflow still shows Download; comment menu has no Download.
+- Emulator (MuMu, Android 15): same flow plus feed/story downloads, ghost badge, follower badge.
 
 ## Release asset
-- `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk`
-- Size: 165,370,808 bytes
-- SHA-256: `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1`
-
-## Features
-- Mod Setting button on your profile with Anonymous story view and
-  Download (Stories,Reels,Feeds) toggles.
-- Download button at the top of post and story menus, gated by the download setting.
-- Feed/post downloads resolve the exact visible post (video or best image up to 1080 px).
-- Story downloads resolve the currently displayed slide.
-- Anonymous story view suppresses the story seen report and displays the ghost badge while ON;
-  forwards and hides the badge while OFF.
-- Settings persist in SharedPreferences `igmod`.
-
-## Install
-1. Uninstall the Play Store Instagram (different signature; deletes login/data).
-2. Install the APK and log in.
-3. Disable Play Store auto-update for Instagram.
-4. Allow Play Protect / unknown-source install if prompted.
-
-Prefer a burner account; IG/LSPatch may be detectable.
-
-## Notes
-- Base: Instagram 452.0.0.48.64, arm64-v8a.
-- LSPatch v1.2 (`--injectdex --target-sdk 35 -l 2`), embedded module `com.dl.igmod`.
-- Debug-signed. Updating from a previous debug-signed mod can use `adb install -r`.
-- Repo docs: `Readme.md`, `Skills.md`, `Findings.md`; module source under `lspatch/source`.
+`Instagram_Mod_LSPatch_v452.0.0.48.64-r4.apk` (165,391,288 bytes)
+SHA-256: `1AAB2A854A169AA09B1A33624E008E9633F55F0194E76631CFDEB5F0172ED085`
