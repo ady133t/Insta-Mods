@@ -163,15 +163,15 @@ public class Module implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = true;
-                    A11Y_PRETEND = false;
                     GhostOverlay.showFor(param.thisObject);
+                    StoryNavHider.start(param.thisObject);
                 }
             });
             XposedHelpers.findAndHookMethod("instagram.features.stories.fragment.ReelViewerFragment", cl, "onPause", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = false;
-                    A11Y_PRETEND = true;
+                    StoryNavHider.stop();
                     GhostOverlay.hideFor(param.thisObject);
                 }
             });

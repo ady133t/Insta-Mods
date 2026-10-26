@@ -92,14 +92,7 @@ final class CommentStore {
     static void touch(Activity activity, MotionEvent event) {
         try {
             if (activity == null || event == null) return;
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_UP) {
-                // Tapping the Comment icon opens the sheet: enable the accessibility pretence so
-                // the comment rows get their merged "user said body" labels while they bind.
-                maybeCommentButton(activity, event.getRawX(), event.getRawY());
-                return;
-            }
-            if (action != MotionEvent.ACTION_DOWN) return;
+            if (event.getActionMasked() != MotionEvent.ACTION_DOWN) return;
             // Cheap only: remember where the finger went down. The expensive window walk is
             // deferred to captureForMenu() so scrolling never pays for it on every ACTION_DOWN.
             activityRef = new WeakReference<Activity>(activity);
@@ -108,28 +101,6 @@ final class CommentStore {
             touchAt = System.currentTimeMillis();
         } catch (Throwable t) {
             Log.e("DLM", "comment touch failed", t);
-        }
-    }
-
-    /** True when the tap landed on the Comment icon; turns the a11y pretence on for a while. */
-    private static void maybeCommentButton(Activity activity, float x, float y) {
-        try {
-            List<View> roots = roots(activity);
-            for (int r = 0; r < roots.size(); r++) {
-                List<View> hits = new ArrayList<View>();
-                walk(roots.get(r), x, y, null, hits);
-                for (int i = 0; i < hits.size(); i++) {
-                    CharSequence cd = hits.get(i).getContentDescription();
-                    if (cd != null && "comment".equalsIgnoreCase(cd.toString().trim())) {
-                        Module.A11Y_PRETEND = true;
-                        Log.i("DLM", "comment button tap: a11y pretend on");
-                        Module.MAIN.removeCallbacks(Module.A11Y_OFF);
-                        Module.MAIN.postDelayed(Module.A11Y_OFF, 20000L);
-                        return;
-                    }
-                }
-            }
-        } catch (Throwable t) {
         }
     }
 
