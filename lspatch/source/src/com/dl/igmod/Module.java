@@ -79,6 +79,7 @@ public class Module implements IXposedHookLoadPackage {
         hookProfileText(cl);
         hookCommentLongPress(cl);
         hookRendercoreText(cl);
+        hookToastNoise(cl);
         hookAccessibilityPretend(cl);
         hookFollowerBadge(cl);
     }
@@ -309,6 +310,35 @@ public class Module implements IXposedHookLoadPackage {
             Log.i(TAG, "comment capture hooks");
         } catch (Throwable t) {
             Log.e(TAG, "comment capture hooks failed", t);
+        }
+    }
+
+    /**
+     * IG (or the OEM clipboard) also shows a plain "Copied" toast right after our copy. Drop that
+     * duplicate for a couple of seconds so only the mod's own confirmation is visible.
+     */
+    static void hookToastNoise(final ClassLoader cl) {
+        try {
+            Class<?> toast = XposedHelpers.findClass("android.widget.Toast", cl);
+            XposedBridge.hookAllMethods(toast, "show", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (System.currentTimeMillis() - CommentCopy.lastCopyMs > 3000L) return;
+                        Object text = XposedHelpers.getObjectField(param.thisObject, "mText");
+                        if (!(text instanceof CharSequence)) return;
+                        String s = text.toString().trim();
+                        if ("copied".equalsIgnoreCase(s)) {
+                            param.setResult(null);
+                            Log.i(TAG, "suppressed duplicate copy toast");
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            });
+            Log.i(TAG, "toast noise hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "toast noise hook failed", t);
         }
     }
 

@@ -1397,6 +1397,9 @@ final class CopyIconDrawable extends android.graphics.drawable.Drawable {
 
 /** Adds a Copy comment button to the comment long-press menu. */
 final class CommentCopy {
+    /** Timestamp of the last successful copy; used to drop IG's own duplicate "Copied" toast. */
+    static volatile long lastCopyMs = 0L;
+
     private static WeakReference<android.widget.PopupWindow> POPUP =
             new WeakReference<android.widget.PopupWindow>(null);
 
@@ -1518,7 +1521,17 @@ final class CommentCopy {
         try {
             ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
             if (cm == null) return;
-            cm.setPrimaryClip(ClipData.newPlainText("Instagram comment", text));
+            ClipData clip = ClipData.newPlainText("Instagram comment", text);
+            // Mark the clip sensitive so the system clipboard UI doesn't draw its own
+            // "Copied" confirmation on top of the mod's toast.
+            try {
+                android.os.PersistableBundle extras = new android.os.PersistableBundle();
+                extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+                clip.getDescription().setExtras(extras);
+            } catch (Throwable t) {
+            }
+            cm.setPrimaryClip(clip);
+            lastCopyMs = System.currentTimeMillis();
             Toast.makeText(ctx, "Comment copied", Toast.LENGTH_SHORT).show();
             Log.i("DLM", "comment copied: " + text);
         } catch (Throwable t) {

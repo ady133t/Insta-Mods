@@ -1,25 +1,24 @@
-# Instagram Mod v452.0.0.48.64 - Build r5 (LSPatch)
+# Instagram Mod v452.0.0.48.64 - Build r6 (LSPatch)
 
 Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
 
-## Changes in r5
-- The comment menu action is now a compact **Copy** pill with a copy icon (two overlapping sheets)
-  instead of the wide green "Copy comment" button.
-- The pill follows the system theme: white background with dark text in light mode, dark
-  background with white text in dark mode, plus a subtle 1 dp outline so it reads as a chip on
-  either menu surface.
-- Copying still closes the menu automatically.
+## Changes in r6
+- Fixed the double confirmation after copying a comment. The mod's own Comment copied toast is
+  now the only toast: the clipboard entry is flagged sensitive so the system/OEM clipboard UI no
+  longer adds its own Copied toast, and any duplicate Copied toast from IG is suppressed.
+- The comment action is the themed **Copy** pill with a copy icon from r5 (white pill with dark
+  text in light mode, dark pill with white text in dark mode).
 
-## Still included from r4
-- **Copy comment** copies the exact long-pressed comment (merged `user said body` labels are made
-  available inside the IG process only, then cached from `ComponentHost.setContentDescription`).
-- Comment menus never receive the Download row (both menu shapes detected).
+## Included
+- **Copy comment**: long-press a comment, tap the pill, the exact comment text lands on the
+  clipboard and the menu closes.
+- Comment menus never get the Download row (both menu shapes detected).
 - Scrolling lag fixes (touch hook stores coordinates only; media tracker uses identity checks).
 
 ## Verified
-- Phone (Infinix X6873), dark and light themes: pill renders correctly in both, tapping copies the
-  exact comment and dismisses the menu; comment menu has no Download row; post overflow still does.
+- Phone (Infinix X6873): one toast (Comment copied) after tapping the pill; exact comment copied;
+  menu closes; comment menu has no Download; post overflow still shows Download.
 
 ## Release asset
-`Instagram_Mod_LSPatch_v452.0.0.48.64-r5.apk` (165,391,288 bytes)
-SHA-256: `A63798B114FD6D3E540DFFDDCB9CD7C77068A9D4F348F8D4F2E0986B711E7345`
+`Instagram_Mod_LSPatch_v452.0.0.48.64-r6.apk` (165391288 bytes)
+SHA-256: `9775B633166B2431A9957130B2C819CBC6672B02567FCA9E9E322ED9C79276EC`
