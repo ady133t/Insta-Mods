@@ -1335,6 +1335,66 @@ final class CommentStore {
     }
 }
 
+/** Small "copy" glyph (two overlapping sheets) for the comment menu row. */
+final class CopyIconDrawable extends android.graphics.drawable.Drawable {
+    private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    private final int size;
+    private final float radius;
+
+    CopyIconDrawable(Context context, int color) {
+        this.size = Ui.dp(context, 18);
+        this.radius = Ui.dp(context, 3);
+        paint.setStyle(android.graphics.Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(1.5f, Ui.dp(context, 2) * 0.8f));
+        paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        paint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+        paint.setColor(color);
+    }
+
+    @Override
+    public void draw(android.graphics.Canvas canvas) {
+        android.graphics.Rect b = getBounds();
+        float x = b.left;
+        float y = b.top;
+        float w = b.width();
+        float h = b.height();
+        if (w <= 0 || h <= 0) return;
+        // Back sheet
+        canvas.drawRoundRect(x + 0.08f * w, y + 0.08f * h,
+                x + 0.64f * w, y + 0.64f * h, radius, radius, paint);
+        // Front sheet
+        canvas.drawRoundRect(x + 0.36f * w, y + 0.36f * h,
+                x + 0.92f * w, y + 0.92f * h, radius, radius, paint);
+    }
+
+    @Override
+    public void setAlpha(int alpha) {
+        paint.setAlpha(alpha);
+        invalidateSelf();
+    }
+
+    @Override
+    public void setColorFilter(android.graphics.ColorFilter colorFilter) {
+        paint.setColorFilter(colorFilter);
+        invalidateSelf();
+    }
+
+    @Override
+    public int getOpacity() {
+        return android.graphics.PixelFormat.TRANSLUCENT;
+    }
+
+    @Override
+    public int getIntrinsicWidth() {
+        return size;
+    }
+
+    @Override
+    public int getIntrinsicHeight() {
+        return size;
+    }
+}
+
 /** Adds a Copy comment button to the comment long-press menu. */
 final class CommentCopy {
     private static WeakReference<android.widget.PopupWindow> POPUP =
@@ -1367,16 +1427,28 @@ final class CommentCopy {
             }
 
             TextView row = new TextView(ctx);
-            row.setText("Copy comment");
+            row.setText("Copy");
             row.setTextSize(15f);
             row.setTypeface(Typeface.DEFAULT_BOLD);
-            row.setTextColor(Color.WHITE);
-            row.setGravity(Gravity.CENTER);
+            // Follow the system theme: white pill with dark text in light mode,
+            // dark pill with white text in dark mode.
+            boolean night = (ctx.getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                    == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            int textColor = night ? Color.WHITE : Color.BLACK;
+            int bgColor = night ? Color.parseColor("#2A2A2A") : Color.WHITE;
+            int strokeColor = night ? Color.parseColor("#3F3F3F") : Color.parseColor("#D8D8D8");
+            row.setTextColor(textColor);
+            row.setGravity(Gravity.CENTER_VERTICAL);
             row.setSingleLine(true);
-            row.setMinWidth(Ui.dp(ctx, 150));
+            row.setMinWidth(Ui.dp(ctx, 104));
+            row.setCompoundDrawablesWithIntrinsicBounds(
+                    new CopyIconDrawable(ctx, textColor), null, null, null);
+            row.setCompoundDrawablePadding(Ui.dp(ctx, 8));
             GradientDrawable bg = new GradientDrawable();
-            bg.setColor(Color.parseColor("#1ED760"));
+            bg.setColor(bgColor);
             bg.setCornerRadius(Ui.dp(ctx, 24));
+            bg.setStroke(Ui.dp(ctx, 1), strokeColor);
             row.setBackground(bg);
             row.setPadding(Ui.dp(ctx, 20), Ui.dp(ctx, 12), Ui.dp(ctx, 20), Ui.dp(ctx, 12));
             row.setElevation(Ui.dp(ctx, 4));
