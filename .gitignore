@@ -4,3 +4,6 @@ lspatch/base_clean.apk
 perm_test_decoded/
 instagram_merged.apk
 *.idsig
+
+# Stray npm stub
+package.json
