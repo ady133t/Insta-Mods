@@ -10,10 +10,10 @@ No Frida, no Frida server, no JS bridge, no root, and no PC attach at runtime.
 
 | Item | Value |
 |---|---|
-| APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` (GitHub Release asset) |
-| Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r3.apk` |
-| Size | 165,370,808 bytes |
-| SHA-256 | `8BB6809F1B3CF92B70C0C2950D2A7A009362684E6BBBAEDB2989E2A3814323E1` |
+| APK | `Instagram_Mod_LSPatch_v452.0.0.48.64-r9.apk` (GitHub Release asset) |
+| Local build path | `lspatch\Instagram_Mod_LSPatch_v452.0.0.48.64-r9.apk` |
+| Size | 165,395,384 bytes |
+| SHA-256 | `97A050F443D82CA7D51F9405BDD906B4CA5B0EEE9C910D36F6E18314F1D0D702` |
 | Package | `com.instagram.android` |
 | Version | 452.0.0.48.64 (versionCode 385810270) |
 | ABI | arm64-v8a |
@@ -26,6 +26,14 @@ The repo contains docs and the module source; `perm_test_decoded` and `base_clea
 because of their size.
 
 Build `r2`: renamed the Mod Settings row to **Download (Stories,Reels,Feeds)**.
+Build `r9`: story navigation is stock again. The mod fakes an accessibility service so Instagram
+builds the merged comment labels that Copy comment reads; while Instagram thinks a screen reader is
+attached it replaces the normal full-width left/right story tap zones with two small
+**Previous story / Next story** buttons (and, in the earlier builds, those buttons were hidden, so
+only taps exactly on them navigated). r9 switches the accessibility pretence off for the whole
+story viewer, starting at the `ReelViewerFragment` constructor, and restores it when the viewer
+pauses. Instagram therefore builds its normal story UI and tapping anywhere on the left or right
+side navigates exactly like the stock app.
 Build `r3`: moved the menu Download row to the **top**, turned it into a rounded green
 `#1ED760` button, and added the semi-transparent ghost badge overlay in the story viewer when
 anonymous view is ON. The badge is anchored to the visible story-content frame, with matching

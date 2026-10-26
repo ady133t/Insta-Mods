@@ -133,6 +133,7 @@ public class Module implements IXposedHookLoadPackage {
     }
 
     static long lastSeenLog = 0;
+    static long lastTouchExploreLog = 0;
 
     static void hookStealth(final ClassLoader cl) {
         try {
@@ -158,26 +159,48 @@ public class Module implements IXposedHookLoadPackage {
     }
 
     static void hookStory(final ClassLoader cl) {
+        // Flip the accessibility pretence off before the story viewer inflates anything.
+        // While IG believes a screen reader is active it hands story navigation to the small
+        // "Previous story"/"Next story" buttons and disables the normal full-width tap zones,
+        // which is why edge taps stopped working. The constructor is the earliest point.
+        try {
+            XposedHelpers.findAndHookConstructor("instagram.features.stories.fragment.ReelViewerFragment", cl, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    A11Y_PRETEND = false;
+                }
+            });
+            Log.i(TAG, "story ctor hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "story ctor hook failed", t);
+        }
         try {
             XposedHelpers.findAndHookMethod("instagram.features.stories.fragment.ReelViewerFragment", cl, "onResume", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = true;
+                    A11Y_PRETEND = false;
                     GhostOverlay.showFor(param.thisObject);
                     StoryNavHider.start(param.thisObject);
                 }
             });
+            Log.i(TAG, "story resume hook");
+        } catch (Throwable t) {
+            Log.e(TAG, "story resume hook failed", t);
+        }
+        try {
             XposedHelpers.findAndHookMethod("instagram.features.stories.fragment.ReelViewerFragment", cl, "onPause", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = false;
+                    A11Y_PRETEND = true;
                     StoryNavHider.stop();
                     GhostOverlay.hideFor(param.thisObject);
                 }
             });
-            Log.i(TAG, "story hook");
+            Log.i(TAG, "story pause hook");
         } catch (Throwable t) {
-            Log.e(TAG, "story hook failed", t);
+            Log.e(TAG, "story pause hook failed", t);
         }
     }
 
@@ -472,7 +495,31 @@ public class Module implements IXposedHookLoadPackage {
                 }
             };
             XposedBridge.hookAllMethods(am, "isEnabled", on);
-            XposedBridge.hookAllMethods(am, "isTouchExplorationEnabled", on);
+            // Touch exploration (TalkBack) is deliberately NOT pretended: faking it makes IG draw the
+            // accessibility flavoured story UI (small "Previous story"/"Next story" arrow buttons that
+            // replace the wide left/right tap zones). Only "isEnabled" is needed for Litho to build
+            // the merged comment labels.
+            XC_MethodHook off = new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        param.setResult(Boolean.FALSE);
+                        long now = System.currentTimeMillis();
+                        if (now - lastTouchExploreLog > 5000) {
+                            lastTouchExploreLog = now;
+                            StackTraceElement[] st = new Throwable().getStackTrace();
+                            StringBuilder sb = new StringBuilder("touch-explore query from: ");
+                            for (int i = 2; i < st.length && i < 8; i++) {
+                                sb.append(st[i].getClassName()).append('#').append(st[i].getMethodName())
+                                        .append(" <- ");
+                            }
+                            Log.i(TAG, sb.toString());
+                        }
+                    } catch (Throwable t) {
+                    }
+                }
+            };
+            XposedBridge.hookAllMethods(am, "isTouchExplorationEnabled", off);
             Log.i(TAG, "a11y pretend hook");
         } catch (Throwable t) {
             Log.e(TAG, "a11y pretend hook failed", t);

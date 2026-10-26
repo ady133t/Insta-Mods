@@ -65,11 +65,10 @@ final class StoryNavHider {
             if (v == null) continue;
             if (isStoryNav(v)) {
                 try {
-                    if (v.getVisibility() != View.INVISIBLE) {
-                        v.setVisibility(View.INVISIBLE);
-                        v.setClickable(false);
-                        v.setEnabled(false);
-                    }
+                    // Zero-alpha: INVISIBLE would block touches, so keep visibility VISIBLE
+                    // and set alpha to 0 so the button is transparent but still clickable.
+                    if (v.getVisibility() != View.VISIBLE) v.setVisibility(View.VISIBLE);
+                    if (v.getAlpha() > 0.01f) v.setAlpha(0f);
                 } catch (Throwable t) {
                 }
             }
