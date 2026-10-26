@@ -1,24 +1,24 @@
-# Instagram Mod v452.0.0.48.64 - Build r6 (LSPatch)
+# Instagram Mod v452.0.0.48.64 - Build r7 (LSPatch)
 
 Permanent, non-root Instagram mod. No Frida, no root, no PC attach.
 
-## Changes in r6
-- Fixed the double confirmation after copying a comment. The mod's own Comment copied toast is
-  now the only toast: the clipboard entry is flagged sensitive so the system/OEM clipboard UI no
-  longer adds its own Copied toast, and any duplicate Copied toast from IG is suppressed.
-- The comment action is the themed **Copy** pill with a copy icon from r5 (white pill with dark
-  text in light mode, dark pill with white text in dark mode).
+## Changes in r7
+- The accessibility pretence used by **Copy comment** is now off while the story viewer is open.
+  That removes the left/right floating navigation buttons IG shows in stories when an
+  accessibility service is detected, while comments keep working.
+- Everything else from r6/r5 is unchanged.
 
 ## Included
-- **Copy comment**: long-press a comment, tap the pill, the exact comment text lands on the
-  clipboard and the menu closes.
+- **Copy comment**: long-press a comment, tap the themed **Copy** pill (icon + label, white/dark
+  per system theme); the exact comment text is copied, the menu closes and only one confirmation
+  toast is shown.
 - Comment menus never get the Download row (both menu shapes detected).
 - Scrolling lag fixes (touch hook stores coordinates only; media tracker uses identity checks).
 
 ## Verified
-- Phone (Infinix X6873): one toast (Comment copied) after tapping the pill; exact comment copied;
-  menu closes; comment menu has no Download; post overflow still shows Download.
+- Phone (Infinix X6873): story plays with normal UI only (no accessibility nav buttons);
+  comment long-press copies the exact comment ("Lantak la" test) with a single toast.
 
 ## Release asset
-`Instagram_Mod_LSPatch_v452.0.0.48.64-r6.apk` (165391288 bytes)
-SHA-256: `9775B633166B2431A9957130B2C819CBC6672B02567FCA9E9E322ED9C79276EC`
+`Instagram_Mod_LSPatch_v452.0.0.48.64-r7.apk` (165391288 bytes)
+SHA-256: `DB817C6EECCB7032D81C236C3DC72607911A42541539C29A99BD8D7D92769D00`

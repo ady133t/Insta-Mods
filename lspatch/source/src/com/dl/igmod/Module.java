@@ -65,6 +65,22 @@ public class Module implements IXposedHookLoadPackage {
     static Class<?> MEDIA_CLS;
     static Class<?> MEDIA_EXT;
 
+    /**
+     * Pretend an accessibility service is connected so Litho builds the merged comment labels.
+     * Only enabled while the comments bottom sheet is open, so nothing else in IG (stories,
+     * feed, reels) sees an accessibility service and changes its UI.
+     */
+    static volatile boolean A11Y_PRETEND = true;
+
+    /** Turns the accessibility pretence back off after the comment sheet had time to bind. */
+    static final Runnable A11Y_OFF = new Runnable() {
+        @Override
+        public void run() {
+            A11Y_PRETEND = false;
+            Log.i(TAG, "a11y pretend off (timer)");
+        }
+    };
+
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!"com.instagram.android".equals(lpparam.packageName)) return;
@@ -147,6 +163,7 @@ public class Module implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = true;
+                    A11Y_PRETEND = false;
                     GhostOverlay.showFor(param.thisObject);
                 }
             });
@@ -154,6 +171,7 @@ public class Module implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Story.active = false;
+                    A11Y_PRETEND = true;
                     GhostOverlay.hideFor(param.thisObject);
                 }
             });
@@ -447,6 +465,7 @@ public class Module implements IXposedHookLoadPackage {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     try {
+                        if (!A11Y_PRETEND) return;
                         param.setResult(Boolean.TRUE);
                     } catch (Throwable t) {
                     }
